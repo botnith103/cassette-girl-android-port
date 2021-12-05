@@ -37,7 +37,7 @@ import flixel.animation.FlxAnimation;
 import sys.FileSystem;
 #end
 
-import ui.FlxVirtualPad;
+import FlxVirtualPad;
 
 using StringTools;
 
