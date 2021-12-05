@@ -1280,7 +1280,8 @@ class PreferencesSubstate extends MusicBeatSubstate
 		}
 
 		if (controls.BACK) {
-			add(_virtualpad);
+			//add(_virtualpad);
+			//bruh what
 			
 			grpOptions.forEachAlive(function(spr:Alphabet) {
 				spr.alpha = 0;
