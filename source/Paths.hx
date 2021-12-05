@@ -24,15 +24,27 @@ class Paths
 
 	#if MODS_ALLOWED
 	#if (haxe >= "4.0.0")
-	public static var ignoreModFolders:Map<String, Bool> = new Map();
 	public static var customImagesLoaded:Map<String, Bool> = new Map();
 	public static var customSoundsLoaded:Map<String, Sound> = new Map();
 	#else
-	public static var ignoreModFolders:Map<String, Bool> = new Map<String, Bool>();
 	public static var customImagesLoaded:Map<String, Bool> = new Map<String, Bool>();
 	public static var customSoundsLoaded:Map<String, Sound> = new Map<String, Sound>();
 	#end
 	#end
+
+	public static var ignoreModFolders:Map<String, Bool> = [
+		'characters' => true,
+		'custom_events' => true,
+		'custom_notetypes' => true,
+		'data' => true,
+		'songs' => true,
+		'music' => true,
+		'sounds' => true,
+		'videos' => true,
+		'images' => true,
+		'stages' => true,
+		'weeks' => true
+	];
 
 	public static function destroyLoadedImages(ignoreCheck:Bool = false) {
 		#if MODS_ALLOWED
@@ -50,24 +62,10 @@ class Paths
 		#end
 	}
 
+
+
 	static public var currentModDirectory:String = null;
 	static var currentLevel:String;
-	static public function getModFolders()
-	{
-		#if MODS_ALLOWED
-		ignoreModFolders.set('characters', true);
-		ignoreModFolders.set('custom_events', true);
-		ignoreModFolders.set('custom_notetypes', true);
-		ignoreModFolders.set('data', true);
-		ignoreModFolders.set('songs', true);
-		ignoreModFolders.set('music', true);
-		ignoreModFolders.set('sounds', true);
-		ignoreModFolders.set('videos', true);
-		ignoreModFolders.set('images', true);
-		ignoreModFolders.set('stages', true);
-		ignoreModFolders.set('weeks', true);
-		#end
-	}
 
 	static public function setCurrentLevel(name:String)
 	{
@@ -131,9 +129,19 @@ class Paths
 		return getPath('data/$key.json', TEXT, library);
 	}
 
-	inline static public function lua(key:String, ?library:String)
+	inline static public function lua(key:String,?library:String)
 	{
-		return getPath('$key.lua', TEXT, library);
+		return Main.path + getPath('data/$key.lua', TEXT, library);
+	}
+
+	inline static public function luaAsset(key:String,?library:String)
+	{
+		return getPath('data/$key.lua', TEXT, library);
+	}
+
+	inline static public function luaImage(key:String, ?library:String)
+	{
+		return Main.path + getPath('data/$key.png', IMAGE, library);
 	}
 
 	static public function video(key:String)
@@ -278,7 +286,7 @@ class Paths
 			xmlExists = true;
 		}
 
-		return FlxAtlasFrames.fromSparrow((imageLoaded != null ? imageLoaded : image(key, library)), (xmlExists ? File.getContent(modsXml(key)) : file('images/$key.xml', library)));
+		return FlxAtlasFrames.fromSparrow((imageLoaded != null ? imageLoaded : image(key, library)), (xmlExists ? Assets.getText(modsXml(key)) : file('images/$key.xml', library)));
 		#else
 		return FlxAtlasFrames.fromSparrow(image(key, library), file('images/$key.xml', library));
 		#end
@@ -319,7 +327,7 @@ class Paths
 	}
 
 	inline static public function mods(key:String = '') {
-		return 'mods/' + key;
+		return Main.path + 'mods/' + key;
 	}
 
 	inline static public function modsJson(key:String) {
@@ -361,7 +369,7 @@ class Paths
 				return fileToCheck;
 			}
 		}
-		return 'mods/' + key;
+		return Main.path + 'mods/' + key;
 	}
 	#end
 }
