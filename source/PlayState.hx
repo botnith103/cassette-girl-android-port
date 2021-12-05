@@ -1,5 +1,7 @@
 package;
-
+#if mobileC
+import ui.Mobilecontrols;
+#end
 #if desktop
 import Discord.DiscordClient;
 #end
@@ -297,6 +299,10 @@ class PlayState extends MusicBeatState
 	// Lua shit
 	private var luaDebugGroup:FlxTypedGroup<DebugLuaText>;
 	public var introSoundsSuffix:String = '';
+	
+	#if mobileC
+	var mcontrols:Mobilecontrols; 
+	#end
 
 	override public function create()
 	{
@@ -1172,7 +1178,27 @@ class PlayState extends MusicBeatState
 		timeBarBG.cameras = [camHUD];
 		timeTxt.cameras = [camHUD];
 		doof.cameras = [camHUD];
+		#if mobileC
+			mcontrols = new Mobilecontrols();
+			switch (mcontrols.mode)
+			{
+				case VIRTUALPAD_RIGHT | VIRTUALPAD_LEFT | VIRTUALPAD_CUSTOM:
+					controls.setVirtualPad(mcontrols._virtualPad, FULL, NONE);
+				case HITBOX:
+					controls.setHitBox(mcontrols._hitbox);
+				default:
+			}
+			trackedinputs = controls.trackedinputs;
+			controls.trackedinputs = [];
+			var camcontrol = new FlxCamera();
+			FlxG.cameras.add(camcontrol);
+			camcontrol.bgColor.alpha = 0;
+			mcontrols.cameras = [camcontrol];
 
+			mcontrols.visible = false;
+
+			add(mcontrols);
+		#end
 		// if (SONG.song == 'South')
 		// FlxG.camera.alpha = 0.7;
 		// UI_camera.zoom = 1;
@@ -1559,7 +1585,9 @@ class PlayState extends MusicBeatState
 
 	public function startCountdown():Void
 	{
-
+		#if mobileC
+		mcontrols.visible = true;
+		#end
 		if (curStage == 'cgstage')
 			{
 				FlxTween.tween(c1, {alpha: 1}, 1, {
