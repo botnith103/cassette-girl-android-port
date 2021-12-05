@@ -1,5 +1,6 @@
 package;
-
+//NOTICE: code from kviks.
+//Modified by zack.
 #if desktop
 import Discord.DiscordClient;
 #end
@@ -11,10 +12,10 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.math.FlxMath;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
+import flixel.util.FlxStringUtil;
 import lime.utils.Assets;
 import flixel.FlxSubState;
 import flash.text.TextField;
-import flixel.addons.display.FlxBackdrop;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.util.FlxSave;
@@ -24,19 +25,30 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
 import flixel.input.keyboard.FlxKey;
 import flixel.graphics.FlxGraphic;
-import flixel.util.FlxColor;
 import Controls;
+
+#if android
+import flixel.ui.FlxButton;
+import flixel.addons.ui.FlxUIButton;
+import flixel.text.FlxText;
+import ui.FlxVirtualPad;
+import flixel.util.FlxSave;
+import flixel.math.FlxPoint;
+import haxe.Json;
+import ui.Hitbox;
+import Config;
+import lime.system.Clipboard;
+#end
 
 using StringTools;
 
 // TO DO: Redo the menu creation system for not being as dumb
 class OptionsState extends MusicBeatState
 {
-	var options:Array<String> = ['Notes', 'Controls', 'Preferences'];
+	var options:Array<String> = ['Notes', #if windows'Controls',#elseif mobileC 'Mobile Controls',#end 'Preferences'];
 	private var grpOptions:FlxTypedGroup<Alphabet>;
 	private static var curSelected:Int = 0;
-	public static var menuBG:FlxSprite;
-	var backdrops:FlxBackdrop = new FlxBackdrop(Paths.image('backdrop2'), 0.2, 0.2, true, true);
+	public static var menuBG:FlxSprite;		
 
 	override function create() {
 		#if desktop
@@ -51,9 +63,6 @@ class OptionsState extends MusicBeatState
 		menuBG.antialiasing = ClientPrefs.globalAntialiasing;
 		add(menuBG);
 
-		add(backdrops);
-		backdrops.scrollFactor.set(0, 0.07);
-
 		grpOptions = new FlxTypedGroup<Alphabet>();
 		add(grpOptions);
 
@@ -66,6 +75,10 @@ class OptionsState extends MusicBeatState
 		}
 		changeSelection();
 
+		#if mobileC
+		addVirtualPad(FULL, A_B);
+		#end		
+
 		super.create();
 	}
 
@@ -76,10 +89,8 @@ class OptionsState extends MusicBeatState
 	}
 
 	override function update(elapsed:Float) {
-		super.update(elapsed);
-		backdrops.x-=90* elapsed;
-		backdrops.y -=90* elapsed;
-		backdrops.color = FlxColor.RED;
+		super.update(elapsed);				
+
 		if (controls.UI_UP_P) {
 			changeSelection(-1);
 		}
@@ -99,13 +110,18 @@ class OptionsState extends MusicBeatState
 
 			switch(options[curSelected]) {
 				case 'Notes':
-					openSubState(new NotesSubstate());
+				 	openSubState(new NotesSubstate());
 
 				case 'Controls':
 					openSubState(new ControlsSubstate());
 
+				#if mobileC
+				case 'Mobile Controls':
+					openSubState(new CustomControlsState());					
+				#end
+
 				case 'Preferences':
-					openSubState(new PreferencesSubstate());
+					openSubState(new PreferencesSubstate());									
 			}
 		}
 	}
@@ -131,6 +147,419 @@ class OptionsState extends MusicBeatState
 	}
 }
 
+class CustomControlsState extends MusicBeatSubstate 
+{
+	// official custom controls by luckydog7
+	// i(kviks) moved custom controls to substate
+	// official file was options/CustomControlsState.hx
+
+	var _pad:FlxVirtualPad;
+	var _hb:Hitbox;
+
+	var exitbutton:FlxUIButton;
+	var exportbutton:FlxUIButton;
+	var importbutton:FlxUIButton;
+
+	var up_text:FlxText;
+	var down_text:FlxText;
+	var left_text:FlxText;
+	var right_text:FlxText;
+
+	var inputvari:FlxText;
+
+	var leftArrow:FlxSprite;
+	var rightArrow:FlxSprite;
+							//'hitbox',
+	var controlitems:Array<String> = ['right control', 'left control','keyboard','custom', 'hitbox'];
+
+	var curSelected:Int = 0;
+
+	var buttonistouched:Bool = false;
+
+	var bindbutton:flixel.ui.FlxButton;
+
+	var config:Config;
+
+	public function new()
+	{
+		super();
+
+		//init config
+		config = new Config();
+		
+		// bg
+		var bg:FlxSprite = new FlxSprite(-80).loadGraphic('assets/images/menuBG.png');
+		bg.scrollFactor.x = 0;
+		bg.scrollFactor.y = 0.18;
+		bg.setGraphicSize(Std.int(bg.width * 1.1));
+		bg.updateHitbox();
+		bg.screenCenter();
+		bg.antialiasing = true;
+
+		// load curSelected
+		curSelected = config.getcontrolmode();
+		
+
+		//pad
+		_pad = new FlxVirtualPad(RIGHT_FULL, NONE);
+		_pad.alpha = 0;
+		
+
+
+		//text inputvari
+		inputvari = new FlxText(125, 50, 0,controlitems[0], 48);
+		
+		//arrows
+		var ui_tex = Paths.getSparrowAtlas('campaign_menu_UI_assets');
+
+		leftArrow = new FlxSprite(inputvari.x - 60,inputvari.y - 10);
+		leftArrow.frames = ui_tex;
+		leftArrow.animation.addByPrefix('idle', "arrow left");
+		leftArrow.animation.addByPrefix('press', "arrow push left");
+		leftArrow.animation.play('idle');
+
+		rightArrow = new FlxSprite(inputvari.x + inputvari.width + 10, leftArrow.y);
+		rightArrow.frames = ui_tex;
+		rightArrow.animation.addByPrefix('idle', 'arrow right');
+		rightArrow.animation.addByPrefix('press', "arrow push right", 24, false);
+		rightArrow.animation.play('idle');
+
+
+		//text
+		up_text = new FlxText(200, 200, 0,"Button up x:" + _pad.buttonUp.x +" y:" + _pad.buttonUp.y, 24);
+		down_text = new FlxText(200, 250, 0,"Button down x:" + _pad.buttonDown.x +" y:" + _pad.buttonDown.y, 24);
+		left_text = new FlxText(200, 300, 0,"Button left x:" + _pad.buttonLeft.x +" y:" + _pad.buttonLeft.y, 24);
+		right_text = new FlxText(200, 350, 0,"Button right x:" + _pad.buttonRight.x +" y:" + _pad.buttonRight.y, 24);
+		
+		//hitboxes
+
+		_hb = new Hitbox();
+		_hb.visible = false;
+
+		// buttons
+
+		exitbutton = new FlxUIButton(FlxG.width - 650,25,"exit");
+		exitbutton.resize(125,50);
+		exitbutton.setLabelFormat("VCR OSD Mono",24,FlxColor.BLACK,"center");
+
+		var savebutton = new FlxUIButton((exitbutton.x + exitbutton.width + 25),25,"exit and save",() -> {
+			save();
+			FlxG.switchState(new OptionsState());
+		});
+		savebutton.resize(250,50);
+		savebutton.setLabelFormat("VCR OSD Mono",24,FlxColor.BLACK,"center");
+
+		exportbutton = new FlxUIButton(FlxG.width - 150, 25, "export", () -> { savetoclipboard(_pad); } );
+		exportbutton.resize(125,50);
+		exportbutton.setLabelFormat("VCR OSD Mono", 24, FlxColor.BLACK,"center");
+
+		importbutton = new FlxUIButton(exportbutton.x, 100, "import", () -> { loadfromclipboard(_pad); });
+		importbutton.resize(125,50);
+		importbutton.setLabelFormat("VCR OSD Mono", 24, FlxColor.BLACK,"center");
+
+		// add bg
+		add(bg);
+
+		// add buttons
+		add(exitbutton);
+		add(savebutton);
+		add(exportbutton);
+		add(importbutton);
+
+		// add virtualpad
+		this.add(_pad);
+
+		//add hb
+		add(_hb);
+
+
+		// add arrows and text
+		add(inputvari);
+		add(leftArrow);
+		add(rightArrow);
+
+		// add texts
+		add(up_text);
+		add(down_text);
+		add(left_text);
+		add(right_text);
+
+		// change selection
+		changeSelection();
+	}
+
+	override function update(elapsed:Float)
+	{
+		super.update(elapsed);
+		SpamCheck();
+
+		#if android
+		var androidback:Bool = FlxG.android.justReleased.BACK;
+		#else
+		var androidback:Bool = false;
+		#end
+		if (exitbutton.justReleased || androidback){
+			FlxG.switchState(new OptionsState());
+		}
+		
+		for (touch in FlxG.touches.list){
+			//left arrow animation
+			arrowanimate(touch);
+			
+			//change Selection
+			if(touch.overlaps(leftArrow) && touch.justPressed){
+				changeSelection(-1);
+			}else if (touch.overlaps(rightArrow) && touch.justPressed){
+				changeSelection(1);
+			}
+
+			//custom pad 
+			trackbutton(touch);
+		}
+	}
+
+	function changeSelection(change:Int = 0,?forceChange:Int)
+		{
+			curSelected += change;
+	
+			if (curSelected < 0)
+				curSelected = controlitems.length - 1;
+			if (curSelected >= controlitems.length)
+				curSelected = 0;
+			trace(curSelected);
+	
+			if (forceChange != null)
+			{
+				curSelected = forceChange;
+			}
+	
+			inputvari.text = controlitems[curSelected];
+
+			if (forceChange != null)
+				{
+					if (curSelected == 2){
+						_pad.visible = true;
+					}
+					
+					return;
+				}
+			
+			_hb.visible = false;
+	
+			switch curSelected{
+				case 0:
+					this.remove(_pad);
+					_pad = null;
+					_pad = new FlxVirtualPad(RIGHT_FULL, NONE);
+					_pad.alpha = 0.75;
+					this.add(_pad);
+				case 1:
+					this.remove(_pad);
+					_pad = null;
+					_pad = new FlxVirtualPad(FULL, NONE);
+					_pad.alpha = 0.75;
+					this.add(_pad);
+				case 2:
+					trace(2);
+					_pad.alpha = 0;
+				case 3:
+					trace(3);
+					this.add(_pad);
+					_pad.alpha = 0.75;
+					loadcustom();
+				case 4:
+					remove(_pad);
+					_pad.alpha = 0;
+					_hb.visible = true;
+
+			}
+	
+		}
+
+	function arrowanimate(touch:flixel.input.touch.FlxTouch){
+		if(touch.overlaps(leftArrow) && touch.pressed){
+			leftArrow.animation.play('press');
+		}
+		
+		if(touch.overlaps(leftArrow) && touch.released){
+			leftArrow.animation.play('idle');
+		}
+		//right arrow animation
+		if(touch.overlaps(rightArrow) && touch.pressed){
+			rightArrow.animation.play('press');
+		}
+		
+		if(touch.overlaps(rightArrow) && touch.released){
+			rightArrow.animation.play('idle');
+		}
+	}
+
+	function trackbutton(touch:flixel.input.touch.FlxTouch){
+		//custom pad
+
+		if (buttonistouched){
+			
+			if (bindbutton.justReleased && touch.justReleased)
+			{
+				bindbutton = null;
+				buttonistouched = false;
+			}else 
+			{
+				movebutton(touch, bindbutton);
+				setbuttontexts();
+			}
+
+		}else {
+			if (_pad.buttonUp.justPressed) {
+				if (curSelected != 3)
+					changeSelection(0,3);
+
+				movebutton(touch, _pad.buttonUp);
+			}
+			
+			if (_pad.buttonDown.justPressed) {
+				if (curSelected != 3)
+					changeSelection(0,3);
+
+				movebutton(touch, _pad.buttonDown);
+			}
+
+			if (_pad.buttonRight.justPressed) {
+				if (curSelected != 3)
+					changeSelection(0,3);
+
+				movebutton(touch, _pad.buttonRight);
+			}
+
+			if (_pad.buttonLeft.justPressed) {
+				if (curSelected != 3)
+					changeSelection(0,3);
+
+				movebutton(touch, _pad.buttonLeft);
+			}
+		}
+	}
+
+	function movebutton(touch:flixel.input.touch.FlxTouch, button:flixel.ui.FlxButton) {
+		button.x = touch.x - _pad.buttonUp.width / 2;
+		button.y = touch.y - _pad.buttonUp.height / 2;
+		bindbutton = button;
+		buttonistouched = true;
+	}
+
+	function setbuttontexts() {
+		up_text.text = "Button up x:" + _pad.buttonUp.x +" y:" + _pad.buttonUp.y;
+		down_text.text = "Button down x:" + _pad.buttonDown.x +" y:" + _pad.buttonDown.y;
+		left_text.text = "Button left x:" + _pad.buttonLeft.x +" y:" + _pad.buttonLeft.y;
+		right_text.text = "Button right x:" + _pad.buttonRight.x +" y:" + _pad.buttonRight.y;
+	}
+
+	function SpamCheck(){
+	    if (_pad.buttonUp.x == _pad.buttonDown.x && _pad.buttonUp.y == _pad.buttonDown.y){//up Down check
+	        FlxG.switchState(new MainMenuState());
+	    }
+	    if ( _pad.buttonLeft.x == _pad.buttonRight.x && _pad.buttonLeft.y == _pad.buttonRight.y){//leftright check
+	        FlxG.switchState(new MainMenuState());
+	    }
+	    if (_pad.buttonUp.x == _pad.buttonLeft.x && _pad.buttonUp.y == _pad.buttonLeft.y){//up left check
+	        FlxG.switchState(new MainMenuState());
+	    }
+	    if (_pad.buttonLeft.x == _pad.buttonDown.x && _pad.buttonLeft.y == _pad.buttonDown.y){//left Down check
+	        FlxG.switchState(new MainMenuState());
+	    }
+	    if (_pad.buttonUp.x == _pad.buttonRight.x && _pad.buttonUp.y == _pad.buttonRight.y){//up right check
+	        FlxG.switchState(new MainMenuState());
+	    }
+	    if (_pad.buttonDown.x == _pad.buttonRight.x && _pad.buttonDown.y == _pad.buttonRight.y){//done right check
+	        FlxG.switchState(new MainMenuState());
+	    }
+	}
+
+	function save() {
+
+		config.setcontrolmode(curSelected);
+		
+		if (curSelected == 3){
+			savecustom();
+		}
+	}
+
+	function savecustom() {
+		trace("saved");
+
+		//Config.setdata(55);
+
+		config.savecustom(_pad);
+	}
+
+	function loadcustom():Void{
+		//load pad
+		_pad = config.loadcustom(_pad);	
+	
+	}
+
+	function resizebuttons(vpad:FlxVirtualPad, ?int:Int = 200) {
+		for (button in vpad)
+		{
+				button.setGraphicSize(260);
+				button.updateHitbox();
+		}
+	}
+
+	function savetoclipboard(pad:FlxVirtualPad) {
+		trace("saved");
+		
+		var json = {
+			buttonsarray : []
+		};
+
+		var tempCount:Int = 0;
+		var buttonsarray = new Array();
+		
+		for (buttons in pad)
+		{
+			buttonsarray[tempCount] = FlxPoint.get(buttons.x, buttons.y);
+
+			tempCount++;
+		}
+
+		json.buttonsarray = buttonsarray;
+
+		trace(json);
+
+		var data:String = Json.stringify(json);
+
+		openfl.system.System.setClipboard(data.trim());
+	}
+
+	function loadfromclipboard(pad:FlxVirtualPad):Void{
+		//load pad
+
+		if (curSelected != 3)
+			changeSelection(0,3);
+
+		var cbtext:String = Clipboard.text; // this not working on android 10 or higher
+
+		if (!cbtext.endsWith("}")) return;
+
+		var json = Json.parse(cbtext);
+
+		var tempCount:Int = 0;
+
+		for(buttons in pad)
+		{
+			buttons.x = json.buttonsarray[tempCount].x;
+			buttons.y = json.buttonsarray[tempCount].y;
+			tempCount++;
+		}	
+		setbuttontexts();
+	}
+
+	override function destroy()
+	{
+		super.destroy();
+	}
+}
 
 
 class NotesSubstate extends MusicBeatSubstate
@@ -147,7 +576,7 @@ class NotesSubstate extends MusicBeatSubstate
 
 	var posX = 250;
 	public function new() {
-		super();
+		super();	
 
 		grpNotes = new FlxTypedGroup<FlxSprite>();
 		add(grpNotes);
@@ -188,6 +617,10 @@ class NotesSubstate extends MusicBeatSubstate
 		hsvText = new Alphabet(0, 0, "Hue    Saturation  Brightness", false, false, 0, 0.65);
 		add(hsvText);
 		changeSelection();
+
+		#if mobileC
+		addVirtualPad(FULL, A_B);
+		#end			
 	}
 
 	var changingNote:Bool = false;
@@ -293,19 +726,13 @@ class NotesSubstate extends MusicBeatSubstate
 			}
 		}
 
-		if (controls.BACK || (changingNote && controls.ACCEPT)) {
-			changeSelection();
-			if(!changingNote) {
-				grpNumbers.forEachAlive(function(spr:Alphabet) {
-					spr.alpha = 0;
-				});
-				grpNotes.forEachAlive(function(spr:FlxSprite) {
-					spr.alpha = 0;
-				});
-				close();
-			}
-			changingNote = false;
-			FlxG.sound.play(Paths.sound('cancelMenu'));
+		#if android
+		var androidback:Bool = FlxG.android.justReleased.BACK;
+		#else
+		var androidback:Bool = false;
+		#end
+		if (controls.BACK || androidback || (changingNote && controls.ACCEPT)) {
+			FlxG.switchState(new OptionsState());
 		}
 
 		if(nextAccept > 0) {
@@ -435,6 +862,7 @@ class ControlsSubstate extends MusicBeatSubstate {
 
 	public function new() {
 		super();
+
 		grpOptions = new FlxTypedGroup<Alphabet>();
 		add(grpOptions);
 
@@ -469,6 +897,10 @@ class ControlsSubstate extends MusicBeatSubstate {
 			}
 		}
 		changeSelection();
+
+		#if mobileC
+		addVirtualPad(FULL, A_B);
+		#end		
 	}
 
 	var leaving:Bool = false;
@@ -484,14 +916,14 @@ class ControlsSubstate extends MusicBeatSubstate {
 			if (controls.UI_LEFT_P || controls.UI_RIGHT_P) {
 				changeAlt();
 			}
-
-			if (controls.BACK) {
-				ClientPrefs.keyBinds = controlMap.copy();
+			#if android
+			var androidback:Bool = FlxG.android.justReleased.BACK;
+			#else
+			var androidback:Bool = false;
+			#end
+			if (controls.BACK || androidback  || FlxG.android.justReleased.BACK) {
 				ClientPrefs.reloadControls();
-				grpOptions.forEachAlive(function(spr:Alphabet) {
-					spr.alpha = 0;
-				});
-				close();
+				FlxG.switchState(new OptionsState());
 				FlxG.sound.play(Paths.sound('cancelMenu'));
 			}
 
@@ -717,13 +1149,16 @@ class PreferencesSubstate extends MusicBeatSubstate
 	];
 	static var noCheckbox:Array<String> = [
 		'Framerate',
-		'Note Delay'
+		'Note Delay',
+		'Scroll Speed',
+		'Note Size'
 	];
 
 	static var options:Array<String> = [
 		'GRAPHICS',
 		'Low Quality',
 		'Anti-Aliasing',
+		'Persistent Cached Data',
 		#if !html5
 		'Framerate', //Apparently 120FPS isn't correctly supported on Browser? Probably it has some V-Sync shit enabled by default, idk
 		#end
@@ -733,13 +1168,15 @@ class PreferencesSubstate extends MusicBeatSubstate
 		'Ghost Tapping',
 		'Note Delay',
 		'Note Splashes',
-		'Hue Change',
+		// 'Note Size',
+		// 'Custom Scroll Speed',
+		// 'Scroll Speed',
 		'Hide HUD',
+		'Hide Song Length',
 		'Flashing Lights',
-		'Camera Zooms'
-		#if !mobile
-		,'FPS Counter'
-		#end
+		'Camera Zooms',
+		'FPS Counter'
+
 	];
 
 	private var grpOptions:FlxTypedGroup<Alphabet>;
@@ -754,6 +1191,7 @@ class PreferencesSubstate extends MusicBeatSubstate
 	public function new()
 	{
 		super();
+
 		// avoids lagspikes while scrolling through menus!
 		showCharacter = new Character(840, 170, 'bf', true);
 		showCharacter.setGraphicSize(Std.int(showCharacter.width * 0.8));
@@ -822,6 +1260,10 @@ class PreferencesSubstate extends MusicBeatSubstate
 		}
 		changeSelection();
 		reloadValues();
+
+		#if mobileC
+		addVirtualPad(FULL, A_B);
+		#end		
 	}
 
 	var nextAccept:Int = 5;
@@ -838,6 +1280,8 @@ class PreferencesSubstate extends MusicBeatSubstate
 		}
 
 		if (controls.BACK) {
+			add(_virtualpad);
+			
 			grpOptions.forEachAlive(function(spr:Alphabet) {
 				spr.alpha = 0;
 			});
@@ -854,8 +1298,8 @@ class PreferencesSubstate extends MusicBeatSubstate
 				showCharacter.alpha = 0;
 			}
 			descText.alpha = 0;
-			close();
-			FlxG.sound.play(Paths.sound('cancelMenu'));
+			FlxG.switchState(new OptionsState());
+			FlxG.sound.play(Paths.sound('cancelMenu'));	
 		}
 
 		var usesCheckbox = true;
@@ -894,9 +1338,6 @@ class PreferencesSubstate extends MusicBeatSubstate
 					case 'Note Splashes':
 						ClientPrefs.noteSplashes = !ClientPrefs.noteSplashes;
 
-					case 'Hue Change':
-						ClientPrefs.huechange = !ClientPrefs.huechange;
-
 					case 'Flashing Lights':
 						ClientPrefs.flashing = !ClientPrefs.flashing;
 
@@ -920,7 +1361,16 @@ class PreferencesSubstate extends MusicBeatSubstate
 
 					case 'Hide HUD':
 						ClientPrefs.hideHud = !ClientPrefs.hideHud;
+
+					// case 'Custom Scroll Speed':
+					// 	ClientPrefs.scroll = !ClientPrefs.scroll;
+
+					case 'Persistent Cached Data':
+						ClientPrefs.imagesPersist = !ClientPrefs.imagesPersist;
+						FlxGraphic.defaultPersist = ClientPrefs.imagesPersist;
 					
+					case 'Hide Song Length':
+						ClientPrefs.hideTime = !ClientPrefs.hideTime;
 				}
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				reloadValues();
@@ -942,6 +1392,16 @@ class PreferencesSubstate extends MusicBeatSubstate
 							FlxG.drawFramerate = ClientPrefs.framerate;
 							FlxG.updateFramerate = ClientPrefs.framerate;
 						}
+					// case 'Scroll Speed':
+					// 	ClientPrefs.speed += add/10;
+					// 	if(ClientPrefs.speed < 0.5) ClientPrefs.speed = 0.5;
+					// 	else if(ClientPrefs.speed > 4) ClientPrefs.speed = 4;
+
+					// case 'Note Size':
+					// 	ClientPrefs.noteSize += add/20;
+					// 	if(ClientPrefs.noteSize < 0.5) ClientPrefs.noteSize = 0.5;
+					// 	else if(ClientPrefs.noteSize > 1.5) ClientPrefs.noteSize = 1.5;
+
 					case 'Note Delay':
 						var mult:Int = 1;
 						if(holdTime > 1.5) { //Double speed after 1.5 seconds holding
@@ -990,6 +1450,8 @@ class PreferencesSubstate extends MusicBeatSubstate
 				daText = "If unchecked, hides FPS Counter.";
 			case 'Low Quality':
 				daText = "If checked, disables some background details,\ndecreases loading times and improves performance.";
+			case 'Persistent Cached Data':
+				daText = "If checked, images loaded will stay in memory\nuntil the game is closed, this increases memory usage,\nbut basically makes reloading times instant.";
 			case 'Anti-Aliasing':
 				daText = "If unchecked, disables anti-aliasing, increases performance\nat the cost of the graphics not looking as smooth.";
 			case 'Downscroll':
@@ -1002,16 +1464,22 @@ class PreferencesSubstate extends MusicBeatSubstate
 				daText = "If unchecked, your mom won't be angry at you.";
 			case 'Violence':
 				daText = "If unchecked, you won't get disgusted as frequently.";
+			// case 'Custom Scroll Speed'://for Joseph -bbpanzu
+			// 	daText = "Leave unchecked for chart-dependent scroll speed";
+			// case 'Scroll Speed':
+			// 	daText = "Arrow speed (Custom must be enabled)";
+			// case 'Note Size':
+			// 	daText = "Size of notes and stuff";
 			case 'Note Splashes':
 				daText = "If unchecked, hitting \"Sick!\" notes won't show particles.";
-			case 'Hue Change':
-				daText = "If checked, will change the hue of the stage to the color of the note that was hit.";
 			case 'Flashing Lights':
 				daText = "Uncheck this if you're sensitive to flashing lights!";
 			case 'Camera Zooms':
 				daText = "If unchecked, the camera won't zoom in on a beat hit.";
 			case 'Hide HUD':
 				daText = "If checked, hides most HUD elements.";
+			case 'Hide Song Length':
+				daText = "If checked, the bar showing how much time is left\nwill be hidden.";
 		}
 		descText.text = daText;
 
@@ -1064,8 +1532,6 @@ class PreferencesSubstate extends MusicBeatSubstate
 						daValue = ClientPrefs.globalAntialiasing;
 					case 'Note Splashes':
 						daValue = ClientPrefs.noteSplashes;
-					case 'Hue Change':
-						daValue = ClientPrefs.huechange;
 					case 'Flashing Lights':
 						daValue = ClientPrefs.flashing;
 					case 'Downscroll':
@@ -1076,12 +1542,18 @@ class PreferencesSubstate extends MusicBeatSubstate
 						daValue = ClientPrefs.ghostTapping;
 					case 'Swearing':
 						daValue = ClientPrefs.cursing;
+					// case 'Custom Scroll Speed':
+					// 	daValue = ClientPrefs.scroll;
 					case 'Violence':
 						daValue = ClientPrefs.violence;
 					case 'Camera Zooms':
 						daValue = ClientPrefs.camZooms;
 					case 'Hide HUD':
 						daValue = ClientPrefs.hideHud;
+					case 'Persistent Cached Data':
+						daValue = ClientPrefs.imagesPersist;
+					case 'Hide Song Length':
+						daValue = ClientPrefs.hideTime;
 				}
 				checkbox.daValue = daValue;
 			}
@@ -1095,6 +1567,11 @@ class PreferencesSubstate extends MusicBeatSubstate
 						daText = '' + ClientPrefs.framerate;
 					case 'Note Delay':
 						daText = ClientPrefs.noteOffset + 'ms';
+					// case 'Note Size':
+					// 	daText = FlxStringUtil.formatMoney(ClientPrefs.noteSize) + 'x';
+					// 	if (ClientPrefs.noteSize == 0.7) daText += "(Default)";
+					// case 'Scroll Speed':
+					// 	daText = ClientPrefs.speed+"";
 				}
 				var lastTracker:FlxSprite = text.sprTracker;
 				text.sprTracker = null;
