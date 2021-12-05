@@ -1,4 +1,4 @@
-package ui;
+package;
 
 import flixel.graphics.FlxGraphic;
 import flixel.addons.ui.FlxButtonPlus;
