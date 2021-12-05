@@ -77,9 +77,10 @@ class Main extends Sprite
 		initialState = TitleState;
 		#end
 		
-		ClientPrefs.loadDefaultKeys();		
+		Paths.getModFolders();
+		ClientPrefs.startControls();
+		
 		addChild(new FlxGame(gameWidth, gameHeight, initialState, zoom, framerate, framerate, skipSplash, startFullscreen));
-		var ourSource:String = "assets/videos/DO NOT DELETE OR GAME WILL CRASH/dontDelete.webm";
 
 		fpsVar = new FPS(10, 3, 0xFFFFFF);
 		addChild(fpsVar);
