@@ -66,6 +66,23 @@ class Paths
 
 	static public var currentModDirectory:String = null;
 	static var currentLevel:String;
+	
+	static public function getModFolders()
+	{
+		#if MODS_ALLOWED
+		ignoreModFolders.set('characters', true);
+		ignoreModFolders.set('custom_events', true);
+		ignoreModFolders.set('custom_notetypes', true);
+		ignoreModFolders.set('data', true);
+		ignoreModFolders.set('songs', true);
+		ignoreModFolders.set('music', true);
+		ignoreModFolders.set('sounds', true);
+		ignoreModFolders.set('videos', true);
+		ignoreModFolders.set('images', true);
+		ignoreModFolders.set('stages', true);
+		ignoreModFolders.set('weeks', true);
+		#end
+	}
 
 	static public function setCurrentLevel(name:String)
 	{
