@@ -31,11 +31,11 @@ import Controls;
 import flixel.ui.FlxButton;
 import flixel.addons.ui.FlxUIButton;
 import flixel.text.FlxText;
-import ui.FlxVirtualPad;
+import FlxVirtualPad;
 import flixel.util.FlxSave;
 import flixel.math.FlxPoint;
 import haxe.Json;
-import ui.Hitbox;
+import Hitbox;
 import Config;
 import lime.system.Clipboard;
 #end
