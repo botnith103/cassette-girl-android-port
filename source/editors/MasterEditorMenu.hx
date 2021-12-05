@@ -56,7 +56,7 @@ class MasterEditorMenu extends MusicBeatState
 		}
 
 		changeSelection();
-		addVirtualPad(UP_DOWN, A_B);
+		addVirtualPad(FULL, A_B);
 		super.create();
 	}
 
