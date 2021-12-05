@@ -1,6 +1,8 @@
 package;
 
-#if MODS_ALLOWED
+import openfl.utils.Assets;
+import openfl.Assets;
+#if dontUseManifest
 import sys.io.File;
 import sys.FileSystem;
 #else
@@ -36,7 +38,7 @@ class StageData {
 				case 'pico' | 'blammed' | 'philly' | 'philly-nice':
 					stage = 'philly';
 				case 'milf' | 'satin-panties' | 'high':
-					stage = 'cgstage';
+					stage = 'limo';
 				case 'cocoa' | 'eggnog':
 					stage = 'mall';
 				case 'winter-horrorland':
@@ -64,12 +66,12 @@ class StageData {
 		var rawJson:String = null;
 		var path:String = Paths.getPreloadPath('stages/' + stage + '.json');
 
-		#if MODS_ALLOWED
+		#if !android
 		var modPath:String = Paths.modFolders('stages/' + stage + '.json');
 		if(FileSystem.exists(modPath)) {
-			rawJson = File.getContent(modPath);
+			rawJson = Assets.getText(modPath);
 		} else if(FileSystem.exists(path)) {
-			rawJson = File.getContent(path);
+			rawJson = Assets.getText(path);
 		}
 		#else
 		if(Assets.exists(path)) {
