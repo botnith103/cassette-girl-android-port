@@ -32,7 +32,7 @@ import sys.io.File;
 import sys.FileSystem;
 #end
 import WeekData;
-import ui.FlxVirtualPad;
+import FlxVirtualPad;
 
 using StringTools;
 
