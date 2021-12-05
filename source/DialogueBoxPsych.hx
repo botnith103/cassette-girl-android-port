@@ -295,6 +295,7 @@ class DialogueBoxPsych extends FlxSpriteGroup
 				pressedEnter = true;
 			}
 		}
+			#end
 
 			if(PlayerSettings.player1.controls.ACCEPT #if mobileC || touched #end) {
 				if(!daText.finishedText) {
