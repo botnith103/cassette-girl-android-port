@@ -1,7 +1,7 @@
 package editors;
 
 import flixel.FlxCamera;
-import ui.Mobilecontrols;
+import Mobilecontrols;
 import Section.SwagSection;
 import Song.SwagSong;
 import flixel.group.FlxGroup.FlxTypedGroup;
