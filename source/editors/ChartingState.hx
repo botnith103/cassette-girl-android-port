@@ -48,7 +48,7 @@ import sys.FileSystem;
 import flash.media.Sound;
 #end
 
-import ui.FlxVirtualPad;
+import FlxVirtualPad;
 
 using StringTools;
 
