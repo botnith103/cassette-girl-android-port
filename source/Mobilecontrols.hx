@@ -3,8 +3,8 @@ package;
 import flixel.FlxG;
 import flixel.group.FlxSpriteGroup;
 
-import ui.FlxVirtualPad;
-import ui.Hitbox;
+import FlxVirtualPad;
+import Hitbox;
 
 import Config;
 
