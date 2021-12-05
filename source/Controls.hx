@@ -1,5 +1,5 @@
 package;
-
+//NOTICE: Code used from kviks!
 import flixel.FlxG;
 import flixel.input.FlxInput;
 import flixel.input.actions.FlxAction;
