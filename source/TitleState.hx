@@ -61,6 +61,9 @@ class TitleState extends MusicBeatState
 
 	override public function create():Void
 	{
+		#if android
+		FlxG.android.preventDefaultKeys = [BACK];
+		#end
 
 		#if (polymod && !html5)
 		if (sys.FileSystem.exists('mods/')) {
@@ -306,7 +309,7 @@ class TitleState extends MusicBeatState
 
 		var pressedEnter:Bool = FlxG.keys.justPressed.ENTER;
 
-		#if mobile
+		#if (mobile || android || mobileC) //this shit fixes stuff lao.
 		for (touch in FlxG.touches.list)
 		{
 			if (touch.justPressed)
