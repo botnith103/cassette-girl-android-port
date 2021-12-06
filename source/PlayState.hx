@@ -1,6 +1,6 @@
 package;
 #if mobileC
-import ui.Mobilecontrols;
+import Mobilecontrols;
 #end
 #if desktop
 import Discord.DiscordClient;
