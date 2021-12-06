@@ -237,7 +237,7 @@ class MainMenuState extends MusicBeatState
 								}*/
 					
 								// Nevermind that's stupid lmao
-								PlayState.storyPlaylist = songArray;
+								PlayState.storyPlaylist = ["ukiyo", "earworm", "machina"];
 								PlayState.isStoryMode = true;
 					
 								var diffic = CoolUtil.difficultyStuff[2][1];
