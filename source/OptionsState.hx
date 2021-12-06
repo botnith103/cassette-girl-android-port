@@ -112,7 +112,7 @@ class OptionsState extends MusicBeatState
 				case 'Notes':
 				 	openSubState(new NotesSubstate());
 
-				case 'Controls':
+				case 'Keyboard Controls':
 					openSubState(new ControlsSubstate());
 
 				#if mobileC
