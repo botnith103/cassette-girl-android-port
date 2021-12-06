@@ -230,11 +230,11 @@ class MainMenuState extends MusicBeatState
 						switch (daChoice)
 						{
 							case 'MENUPLAY':
-								var songArray:Array<String> = [];
+								/*var songArray:Array<String> = [];
 								var leWeek:Array<Dynamic> = WeekData.weeksLoaded.get(WeekData.weeksList[0]).songs;
 								for (i in 0...leWeek.length) {
 									songArray.push(leWeek[i][0]);
-								}
+								}*/
 					
 								// Nevermind that's stupid lmao
 								PlayState.storyPlaylist = songArray;
