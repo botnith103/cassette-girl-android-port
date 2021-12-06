@@ -8,7 +8,7 @@ import flixel.FlxSprite;
 import flixel.FlxCamera;
 #if mobileC
 import flixel.input.actions.FlxActionInput;
-import ui.FlxVirtualPad;
+import FlxVirtualPad;
 #end
 
 class MusicBeatSubstate extends FlxSubState
