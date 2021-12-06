@@ -351,13 +351,13 @@ class FreeplayState extends MusicBeatState
 		if (curSelected >= songs.length)
 			curSelected = 0;
 
-		var newColor:Int = songs[curSelected].color;
+		/*var newColor:Int = songs[curSelected].color;
 		if(newColor != intendedColor) {
 			if(colorTween != null) {
 				colorTween.cancel();
 			}
 			intendedColor = newColor;
-		}
+		}*/
 
 		// selector.y = (70 * curSelected) + 30;
 
