@@ -16,7 +16,7 @@ import flixel.FlxBasic;
 import flixel.FlxCamera;
 #if mobileC
 import flixel.input.actions.FlxActionInput;
-import ui.FlxVirtualPad;
+import FlxVirtualPad;
 #end
 
 class MusicBeatState extends FlxUIState
